@@ -62,3 +62,15 @@ def scan_port(ip: str, port: int, timeout: float, grab_banner: bool):
             return {"port": port, "service": service_name(port), "banner": banner}
     except OSError:
         return None
+
+
+def scan(ip: str, ports: list[int], timeout: float, threads: int, grab_banner: bool):
+    results = []
+    with ThreadPoolExecutor(max_workers=threads) as pool:
+        futures = [pool.submit(scan_port, ip, p, timeout, grab_banner) for p in ports]
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                results.append(result)
+    return sorted(results, key=lambda r: r["port"])
+
